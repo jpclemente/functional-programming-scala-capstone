@@ -2,37 +2,30 @@ package observatory
 
 import java.time.LocalDate
 
-import observatory.Extraction.{Station, TemperatureRecord}
-import org.apache.spark.sql.Dataset
+import observatory.util.Schemas
+import org.apache.spark.sql.Row
 import org.junit.Test
 
 trait ExtractionTest extends MilestoneSuite with SparkSessionWrapper {
   private val milestoneTest = namedMilestoneTest("data extraction", 1) _
 
   // Implement tests for the methods of the `Extraction` object
-  import spark.implicits._
 
   @Test
   def sparkLocateTemperaturesBothEmpty(): Unit = {
     val year = 2015
     val expected = Array[(LocalDate, Location, Temperature)]()
 
-    val stations: Dataset[Station] = Seq[Station]().toDS()
+    val stations = spark.createDataFrame(spark.sparkContext.parallelize(Seq[Row]()), Schemas.statSchema)
 
-    val temperatures: Dataset[TemperatureRecord] = Seq[TemperatureRecord]().toDS()
+    val temperatures = spark.createDataFrame(spark.sparkContext.parallelize(Seq[Row]()), Schemas.tempSchema)
 
-    val result = Extraction.sparkLocateTemperatures(stations, temperatures, 2015)
-      .collect()
-      .map { row =>
-        (LocalDate.of(year, row.getAs[Int]("month"), row.getAs[Int]("day")),
-          Location(row.getAs[Double]("lat"), row.getAs[Double]("lon")),
-          row.getAs[Temperature]("temp"))
-      }
+    val result = Extraction.sparkLocateTemperatures(stations, temperatures, year).toArray
 
     assert(expected sameElements result, "both should have the same elements")
 
     val difference = result.foldLeft(expected)((e, r) => e.filter(_ equals r))
-    assert(difference.isEmpty, "both should have the same elements")
+    assert(difference.isEmpty, "difference should be empty")
   }
 
   @Test
@@ -40,22 +33,19 @@ trait ExtractionTest extends MilestoneSuite with SparkSessionWrapper {
     val year = 2015
     val expected = Array[(LocalDate, Location, Temperature)]()
 
-    val stations: Dataset[Station] = Seq[Station]().toDS()
+    val stations = spark.createDataFrame(spark.sparkContext.parallelize(Seq[Row]()), Schemas.statSchema)
 
-    val temperatures: Dataset[TemperatureRecord] = Seq(
-          TemperatureRecord("010013",      2015, 11, 25, 39.2d),
-          TemperatureRecord("724017",      2015,  8, 11, 27.3d),
-          TemperatureRecord("72401703707", 2015, 12,  6, 0.0d),
-          TemperatureRecord("72401703707", 2015,  1, 29, 2.0d)
-        ).toDS()
+    val temperatures = spark.createDataFrame(
+      spark.sparkContext.parallelize(
+        Seq(
+          Row("010013",      "","11","25", "39.2"),
+          Row("724017",      "","08","11","81.14"),
+          Row("724017", "03707","12","06",   "32"),
+          Row("724017", "03707","01","29", "35.6")
+        )
+      ), Schemas.tempSchema)
 
-    val result = Extraction.sparkLocateTemperatures(stations, temperatures, 2015)
-      .collect()
-      .map { row =>
-        (LocalDate.of(year, row.getAs[Int]("month"), row.getAs[Int]("day")),
-          Location(row.getAs[Double]("lat"), row.getAs[Double]("lon")),
-          row.getAs[Temperature]("temp"))
-      }
+    val result = Extraction.sparkLocateTemperatures(stations, temperatures, year).toArray
 
     assert(expected sameElements result, "both should have the same elements")
 
@@ -68,20 +58,18 @@ trait ExtractionTest extends MilestoneSuite with SparkSessionWrapper {
     val year = 2015
     val expected = Array[(LocalDate, Location, Temperature)]()
 
-    val stations: Dataset[Station] = Seq(
-      Station("72401703707", +37.358d,-078.438d),
-      Station("724017", +37.350d,-078.433d)
-    ).toDS()
+    val stations = spark.createDataFrame(
+      spark.sparkContext.parallelize(
+        Seq(
+          Row("010013",      "",        "",        ""),
+          Row("724017", "03707", "+37.358","-078.438"),
+          Row("724017",      "", "+37.350","-078.433")
+        )
+      ), Schemas.statSchema)
 
-    val temperatures: Dataset[TemperatureRecord] = Seq[TemperatureRecord]().toDS()
+    val temperatures = spark.createDataFrame(spark.sparkContext.parallelize(Seq[Row]()), Schemas.tempSchema)
 
-    val result = Extraction.sparkLocateTemperatures(stations, temperatures, 2015)
-      .collect()
-      .map { row =>
-        (LocalDate.of(year, row.getAs[Int]("month"), row.getAs[Int]("day")),
-          Location(row.getAs[Double]("lat"), row.getAs[Double]("lon")),
-          row.getAs[Temperature]("temp"))
-      }
+    val result = Extraction.sparkLocateTemperatures(stations, temperatures, year).toArray
 
     assert(expected sameElements result, "both should have the same elements")
 
@@ -98,25 +86,27 @@ trait ExtractionTest extends MilestoneSuite with SparkSessionWrapper {
       (LocalDate.of(year, 1, 29), Location(37.358, -78.438), 2.0d)
     )
 
-    val stations: Dataset[Station] = Seq(
-      Station("72401703707", +37.358d,-078.438d),
-      Station("724017", +37.350d,-078.433d)
-    ).toDS()
+    val stations = spark.createDataFrame(
+      spark.sparkContext.parallelize(
+        Seq(
+          Row("010013",      "",        "",        ""),
+          Row("724017", "03707", "+37.358","-078.438"),
+          Row("724017",      "", "+37.350","-078.433")
+        )
+      ), Schemas.statSchema)
 
-    val temperatures: Dataset[TemperatureRecord] = Seq(
-      TemperatureRecord("010013",      2015, 11, 25, 39.2d),
-      TemperatureRecord("724017",      2015,  8, 11, 27.3d),
-      TemperatureRecord("72401703707", 2015, 12,  6, 0.0d),
-      TemperatureRecord("72401703707", 2015,  1, 29, 2.0d)
-    ).toDS()
+    val temperatures = spark.createDataFrame(
+      spark.sparkContext.parallelize(
+        Seq(
+          Row("010013",      "","11","25", "39.2"),
+          Row("724017",      "","08","11","81.14"),
+          Row("724017", "03707","12","06",   "32"),
+          Row("724017", "03707","01","29", "35.6")
+        )
+      ), Schemas.tempSchema)
 
-    val result = Extraction.sparkLocateTemperatures(stations, temperatures, 2015)
-      .collect()
-      .map { row =>
-        (LocalDate.of(year, row.getAs[Int]("month"), row.getAs[Int]("day")),
-          Location(row.getAs[Double]("latitude"), row.getAs[Double]("longitude")),
-          row.getAs[Temperature]("temperature"))
-      }
+    val result = Extraction.sparkLocateTemperatures(stations, temperatures, year).toArray
+      .map(x => (x._1, x._2, BigDecimal(x._3).setScale(1, BigDecimal.RoundingMode.HALF_UP).toDouble))
 
     assert(expected sameElements result, "both should have the same elements")
 
@@ -152,25 +142,25 @@ trait ExtractionTest extends MilestoneSuite with SparkSessionWrapper {
     assert(expected == result, "both should have the same elements")
   }
 
-//  @Test
-//  def locateTemperaturesStationsEmpty(): Unit = {
-//    val year = 2015
-//
-//    val expected = Array[(LocalDate, Location, Temperature)]()
-//
-//    val result = Extraction.locateTemperatures(year, "/empty.csv", "/"+year.toString+".csv").toArray
-//
-//    assert(expected sameElements result, "both should have the same elements")
-//  }
-//
-//  @Test
-//  def locateTemperaturesTemperaturesEmpty(): Unit = {
-//    val year = 2015
-//
-//    val expected = Array[(LocalDate, Location, Temperature)]()
-//
-//    val result = Extraction.locateTemperatures(year, "/stations.csv", "/empty.csv").toArray
-//
-//    assert(expected sameElements result, "both should have the same elements")
-//  }
+  @Test
+  def locateTemperaturesStationsEmpty(): Unit = {
+    val year = 2015
+
+    val expected = Array[(LocalDate, Location, Temperature)]()
+
+    val result = Extraction.locateTemperatures(year, "/empty.csv", "/"+year.toString+".csv").toArray
+
+    assert(expected sameElements result, "both should have the same elements")
+  }
+
+  @Test
+  def locateTemperaturesTemperaturesEmpty(): Unit = {
+    val year = 2015
+
+    val expected = Array[(LocalDate, Location, Temperature)]()
+
+    val result = Extraction.locateTemperatures(year, "/stations.csv", "/empty.csv").toArray
+
+    assert(expected sameElements result, "both should have the same elements")
+  }
 }
