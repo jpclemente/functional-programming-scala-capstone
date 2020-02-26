@@ -1,12 +1,10 @@
 package observatory.util
 
-import java.nio.file.Paths
-
-import observatory.Extraction.{getClass, spark}
-import org.apache.spark.sql.{Column, DataFrame, Dataset}
-import org.apache.spark.sql.types.StructType
+import observatory.Extraction.spark
+import org.apache.spark.sql.{Column, Dataset}
 
 import scala.io.Source
+import scala.util.Try
 
 object Commons {
 
@@ -16,20 +14,14 @@ object Commons {
 
   def celsiusFromFahrenheit(f: Column): Column = (f - 32.0) * 5.0 / 9.0
 
-  def getResourceAsDF(file: String, schema: StructType): DataFrame = {
-    spark.read
-      .schema(schema)
-      .csv(spark.sparkContext.parallelize(
-        Source.fromInputStream(getClass.getResourceAsStream(file)).getLines().toSeq)
-        .toDS()
-      )
-  }
-
-  def getResourceAsDS(file: String, s: Seq[String]): DataFrame = {
-    spark.read
-      .csv(spark.sparkContext.parallelize(s).toDS())
+  def getResource(path: String): Seq[Seq[String]] = {
+    Source.fromInputStream(getClass.getResourceAsStream(path), "utf-8").getLines().map(x => (x split (",", -1)).toSeq).toSeq
   }
 
   def resourcePath(resource: String): Dataset[String] =
     Source.fromInputStream(getClass.getResourceAsStream(resource)).getLines().toSeq.toDS()
+
+  def stringTo[T](field: String): Option[T] = {
+    Try(field.asInstanceOf[T]).toOption
+  }
 }

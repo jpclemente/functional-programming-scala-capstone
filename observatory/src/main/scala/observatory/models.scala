@@ -5,7 +5,10 @@ package observatory
   * @param lat Degrees of latitude, -90 ≤ lat ≤ 90
   * @param lon Degrees of longitude, -180 ≤ lon ≤ 180
   */
-case class Location(lat: Double, lon: Double)
+case class Location(lat: Double, lon: Double){
+  if (lat < -90 | lat > 90) throw new Exception("latitude out of bounds: " + lat)
+  else if (lat < -180 | lat > 180) throw new Exception("longitude out of bounds: " + lon)
+}
 
 /**
   * Introduced in Week 3. Represents a tiled web map tile.
@@ -38,5 +41,9 @@ case class CellPoint(x: Double, y: Double)
   * @param green Level of green, 0 ≤ green ≤ 255
   * @param blue Level of blue, 0 ≤ blue ≤ 255
   */
-case class Color(red: Int, green: Int, blue: Int)
+case class Color(red: Int, green: Int, blue: Int){
+  if (red < 0 | red > 255) throw new Exception("latitude out of bounds")
+  else if (green < 0 | green > 255) throw new Exception("longitude out of bounds")
+  else if (blue < 0 | blue > 255) throw new Exception("longitude out of bounds")
+}
 

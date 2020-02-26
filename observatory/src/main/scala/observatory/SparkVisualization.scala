@@ -1,18 +1,21 @@
 package observatory
 
 import com.sksamuel.scrimage.{Image, Pixel}
+import org.apache.spark.sql.Dataset
 
 import scala.math._
 
 /**
   * 2nd milestone: basic visualization
   */
-object Visualization extends VisualizationInterface with SparkSessionWrapper {
+object SparkVisualization extends VisualizationInterface with SparkSessionWrapper {
 
   val width = 360
   val height = 180
   val alpha = 255
   val earthRadius = 6371000
+
+  import spark.implicits._
 
   /**
     * Computes the distance over the Earth surface between two points
@@ -28,8 +31,8 @@ object Visualization extends VisualizationInterface with SparkSessionWrapper {
     val lon2 = y.lon.toRadians
 
     val angDistance = if (lat1 == lat2 && lon1 == lon2) 0
-                      else if (abs(lat1) == abs(lat2) && abs(lon1 - lon2) == Pi) Pi
-                      else acos(sin(lat1) * sin(lat2) + cos(lat1) * cos(lat2) * cos(lon2 - lon1))
+                      else if (scala.math.abs(lat1) == scala.math.abs(lat2) && scala.math.abs(lon1 - lon2) == 180) Pi
+                      else scala.math.acos( scala.math.sin(lat1) * scala.math.sin(lat2) + scala.math.cos(lat1) * scala.math.cos(lat2) * scala.math.cos(lon2 - lon1) )
 
     earthRadius * angDistance
   }
@@ -45,22 +48,16 @@ object Visualization extends VisualizationInterface with SparkSessionWrapper {
     val accValues = temperatures.foldLeft((0d, 0d)){
       (l, m) => {
         val d = correctedDistance(location, m._1)
-        if ((1/d).isNaN) println("d = " + d + ", " + m._1 + " - " + location)
-        (l._1 + m._2/d, l._2 + 1/ d)
+        (l._1 + m._2/ d, l._2 + 1/ d)
       }
     }
-    val result = accValues._1/accValues._2
-    if (result.isNaN) {
-      println("accValues: " + accValues)
-      throw new Exception("a NaN temperature has been predicted for location: " + location)
-    }
-    else result
+    if ((accValues._1/accValues._2).isNaN) throw new Exception("a NaN temperature has been predicted for location: " + Location)
+    else accValues._1/accValues._2
   }
 
   def correctedDistance(a: Location, b: Location): Double = {
     val d = earthDistance(a, b)
-    if (d < 1000d) 1
-    else d
+    if (d < 1000) 1 else d
   }
 
   def linearInterpolation(p0: (Double, Double), p1: (Double, Double), x: Double): Double = {
