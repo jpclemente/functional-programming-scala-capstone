@@ -1,21 +1,13 @@
 package observatory.util
 
 import observatory.{MilestoneSuite, SparkSessionWrapper}
+import observatory.util.Commons._
+import observatory.Common._
 import org.junit.Test
 
 class CommonsTest extends MilestoneSuite with SparkSessionWrapper {
-
-  import spark.implicits._
-
   @Test
-  def celsiusFromFahrenheit(): Unit = {
-    val expected = Array((32, 0),(41, 5))
-
-    val input = Seq(32, 41).toDF("fahrenheit")
-
-    val result = input.withColumn("celsious", Commons.celsiusFromFahrenheit($"fahrenheit"))
-      .collect.map(row => (row.get(0), row.get(1)))
-
-    assert(result sameElements expected)
+  def celsiusFromFahrenheitTest(): Unit = {
+    customAssert(0d, celsiusFromFahrenheit(32d))
   }
 }

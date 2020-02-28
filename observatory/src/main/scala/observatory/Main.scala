@@ -2,18 +2,18 @@ package observatory
 
 import java.time._
 
+import observatory.util.TimeRecord
+
 object Main extends App with SparkSessionWrapper {
 
   val year: Year = 2015
-
-  val start = Instant.now()
+  val timeRecord = new TimeRecord()
 
   val result1 = Extraction.locateTemperatures(year, "/stations.csv", "/" + year + ".csv")
 
   val locationTemperature = Extraction.locationYearlyAverageRecords(result1)
 
-  val time2 = Instant.now()
-  println("Extraction completed in: " + Duration.between(start, time2).abs().getSeconds + " seconds")
+  timeRecord.stepFinished(Instant.now(), "Extraction")
 
   val colors = Map(
     60d -> Color(255, 255, 255),
@@ -29,10 +29,7 @@ object Main extends App with SparkSessionWrapper {
   val emptyFrame = for {x <- 1 to Visualization.width ; y <- 1 to Visualization.height} yield (x, y)
 
   val result3 = Visualization.visualize(locationTemperature, colors)
-
-  val finalTime = Instant.now()
-  println("Visualization completed in: " + Duration.between(time2, finalTime).abs().getSeconds + " seconds")
-
-  result3.output("image")
-  println("Total time elapsed: " + Duration.between(start, finalTime).abs().getSeconds + " seconds")
+  timeRecord.stepFinished(Instant.now(), "Visualization")
+  result3.output("image.jpg")
+  timeRecord.processFinished(Instant.now())
 }

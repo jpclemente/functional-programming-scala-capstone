@@ -3,7 +3,7 @@ package observatory
 import java.time.LocalDate
 
 import observatory.util.Commons._
-import observatory.util.{Commons, Schemas}
+import observatory.util.Schemas
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{DoubleType, IntegerType}
 import org.apache.spark.sql.{DataFrame, Dataset}
@@ -41,37 +41,37 @@ object Extraction extends ExtractionInterface with SparkSessionWrapper {
   }
 
   private def toLocationTemp(year: Year, stations: Map[String, Location], temp: TemperatureRecord): Option[(LocalDate, Location, Double)] = {
-    Try(LocalDate.of(year, temp.month, temp.day), stations(temp.id), temp.temp).toOption
+    Try(LocalDate.of(year, temp.month, temp.day), stations(temp.id), celsiusFromFahrenheit(temp.temp)).toOption
   }
 
-  def sparkLocateTemperatures(year: Year, stationsFile: String, temperaturesFile: String): DataFrame = {
-
-    val stations = spark.read.schema(Schemas.statSchema).csv(resourcePath(stationsFile))
-
-    val temperatures = spark.read.schema(Schemas.tempSchema).csv(resourcePath(temperaturesFile))
-
-    lazy val id = concat_ws("%", coalesce($"stn", lit("")), $"wban") as "id"
-
-    val temps = temperatures
-      .select(
-        id,
-        lit(year)         as "year",
-        $"month"        cast IntegerType,
-        $"day"          cast IntegerType,
-        $"temperature"  cast DoubleType
-      )
-      .withColumn("temperature", Commons.celsiusFromFahrenheit($"temperature"))
-
-    val stats = stations
-      .select(
-        id,
-        $"latitude" cast DoubleType,
-        $"longitude" cast DoubleType
-      )
-      .where('latitude.isNotNull && 'longitude.isNotNull && 'latitude =!= 0 && 'longitude =!= 0)
-
-    stats.join(temps, "id").select("month", "day", "latitude", "longitude","temperature")
-  }
+//  def sparkLocateTemperatures(year: Year, stationsFile: String, temperaturesFile: String): DataFrame = {
+//
+//    val stations = spark.read.schema(Schemas.statSchema).csv(resourcePath(stationsFile))
+//
+//    val temperatures = spark.read.schema(Schemas.tempSchema).csv(resourcePath(temperaturesFile))
+//
+//    lazy val id = concat_ws("%", coalesce($"stn", lit("")), $"wban") as "id"
+//
+//    val temps = temperatures
+//      .select(
+//        id,
+//        lit(year)         as "year",
+//        $"month"        cast IntegerType,
+//        $"day"          cast IntegerType,
+//        $"temperature"  cast DoubleType
+//      )
+//      .withColumn("temperature", Commons.celsiusFromFahrenheit($"temperature"))
+//
+//    val stats = stations
+//      .select(
+//        id,
+//        $"latitude" cast DoubleType,
+//        $"longitude" cast DoubleType
+//      )
+//      .where('latitude.isNotNull && 'longitude.isNotNull && 'latitude =!= 0 && 'longitude =!= 0)
+//
+//    stats.join(temps, "id").select("month", "day", "latitude", "longitude","temperature")
+//  }
 
   /**
     * @param records A sequence containing triplets (date, location, temperature)

@@ -12,7 +12,7 @@ object Commons {
 
   def getSourcePath(file: String): String = getClass.getResource(file).getPath
 
-  def celsiusFromFahrenheit(f: Column): Column = (f - 32.0) * 5.0 / 9.0
+  def celsiusFromFahrenheit(f: Double): Double = (f - 32.0) * 5.0 / 9.0
 
   def getResource(path: String): Seq[Seq[String]] = {
     Source.fromInputStream(getClass.getResourceAsStream(path), "utf-8").getLines().map(x => (x split (",", -1)).toSeq).toSeq

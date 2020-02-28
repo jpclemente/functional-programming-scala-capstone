@@ -2,8 +2,6 @@ package observatory
 
 import java.time.LocalDate
 
-import observatory.util.Schemas
-import org.apache.spark.sql.Row
 import org.junit.Test
 
 trait ExtractionTest extends MilestoneSuite with SparkSessionWrapper {
@@ -20,15 +18,15 @@ trait ExtractionTest extends MilestoneSuite with SparkSessionWrapper {
 //
 //    val temperatures = spark.createDataFrame(spark.sparkContext.parallelize(Seq[Row]()), Schemas.tempSchema)
 //
-//    val result = Extraction.sparkLocateTemperatures(stations, temperatures, year).collect()
+//    val result = Extraction.sparkLocateTemperatures(year, stations, temperatures, year).collect()
 //
 //    assert(expected sameElements result, "both should have the same elements")
 //
 //    val difference = result.foldLeft(expected)((e, r) => e.filter(_ equals r))
 //    assert(difference.isEmpty, "difference should be empty")
 //  }
-//
-//  @Test
+
+  //  @Test
 //  def sparkLocateTemperaturesStationsEmpty(): Unit = {
 //    val year = 2015
 //    val expected = Array[Row]()
@@ -121,53 +119,54 @@ trait ExtractionTest extends MilestoneSuite with SparkSessionWrapper {
 //    assert(difference.isEmpty, "both should have the same elements")
 //  }
 //
-//  @Test
-//  def locationYearlyAverageRecordsEmpty(): Unit = {
-//    val input = Seq()
-//    val expected = Seq()
-//
-//    val result = Extraction.locationYearlyAverageRecords(input).toSeq
-//
-//    assert(expected == result, "both should have the same elements")
-//  }
-//
-//  @Test
-//  def locationYearlyAverageRecordsNonEmpty(): Unit = {
-//    val input = Seq(
-//      (LocalDate.of(2015, 8, 11), Location(37.35, -78.433), 27.3),
-//      (LocalDate.of(2015, 12, 6), Location(37.358, -78.438), 0.0),
-//      (LocalDate.of(2015, 1, 29), Location(37.358, -78.438), 2.0)
-//    )
-//
-//    val expected = Seq(
-//      (Location(37.35, -78.433), 27.3),
-//      (Location(37.358, -78.438), 1.0)
-//    )
-//
-//    val result = Extraction.locationYearlyAverageRecords(input).toSeq
-//
-//    assert(expected == result, "both should have the same elements")
-//  }
-//
-//  @Test
-//  def locateTemperaturesStationsEmpty(): Unit = {
-//    val year = 2015
-//
-//    val expected = Array[(LocalDate, Location, Temperature)]()
-//
-//    val result = Extraction.locateTemperatures(year, "/empty.csv", "/"+year.toString+".csv").toArray
-//
-//    assert(expected sameElements result, "both should have the same elements")
-//  }
-//
-//  @Test
-//  def locateTemperaturesTemperaturesEmpty(): Unit = {
-//    val year = 2015
-//
-//    val expected = Array[(LocalDate, Location, Temperature)]()
-//
-//    val result = Extraction.locateTemperatures(year, "/stations.csv", "/empty.csv").toArray
-//
-//    assert(expected sameElements result, "both should have the same elements")
-//  }
+
+  @Test
+  def locationYearlyAverageRecordsEmpty(): Unit = {
+    val input = Seq()
+    val expected = Seq()
+
+    val result = Extraction.locationYearlyAverageRecords(input).toSeq
+
+    assert(expected == result, "both should have the same elements")
+  }
+
+  @Test
+  def locationYearlyAverageRecordsNonEmpty(): Unit = {
+    val input = Seq(
+      (LocalDate.of(2015, 8, 11), Location(37.35, -78.433), 27.3),
+      (LocalDate.of(2015, 12, 6), Location(37.358, -78.438), 0.0),
+      (LocalDate.of(2015, 1, 29), Location(37.358, -78.438), 2.0)
+    )
+
+    val expected = Seq(
+      (Location(37.35, -78.433), 27.3),
+      (Location(37.358, -78.438), 1.0)
+    )
+
+    val result = Extraction.locationYearlyAverageRecords(input).toSeq
+
+    assert(expected == result, "both should have the same elements")
+  }
+
+  @Test
+  def locateTemperaturesStationsEmpty(): Unit = {
+    val year = 2015
+
+    val expected = Array[(LocalDate, Location, Temperature)]()
+
+    val result = Extraction.locateTemperatures(year, "/empty.csv", "/"+year.toString+".csv").toArray
+
+    assert(expected sameElements result, "both should have the same elements")
+  }
+
+  @Test
+  def locateTemperaturesTemperaturesEmpty(): Unit = {
+    val year = 2015
+
+    val expected = Array[(LocalDate, Location, Temperature)]()
+
+    val result = Extraction.locateTemperatures(year, "/stations.csv", "/empty.csv").toArray
+
+    assert(expected sameElements result, "both should have the same elements")
+  }
 }
