@@ -42,8 +42,8 @@ case class CellPoint(x: Double, y: Double)
   * @param blue Level of blue, 0 ≤ blue ≤ 255
   */
 case class Color(red: Int, green: Int, blue: Int){
-  if (red < 0 | red > 255) throw new Exception("latitude out of bounds")
-  else if (green < 0 | green > 255) throw new Exception("longitude out of bounds")
-  else if (blue < 0 | blue > 255) throw new Exception("longitude out of bounds")
+  if (red < 0 | red > 255) throw new Exception("Red component out of bounds")
+  else if (green < 0 | green > 255) throw new Exception("Green component out of bounds")
+  else if (blue < 0 | blue > 255) throw new Exception("Blue component out of bounds")
 }
 

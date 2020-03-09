@@ -1,7 +1,7 @@
 package observatory.util
 
 import observatory.Extraction.spark
-import org.apache.spark.sql.{Column, Dataset}
+import org.apache.spark.sql.Dataset
 
 import scala.io.Source
 import scala.util.Try
