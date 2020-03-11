@@ -3,7 +3,6 @@ package observatory
 import java.time.LocalDate
 
 import observatory.util.Commons._
-import org.apache.spark.sql.Dataset
 
 import scala.util.Try
 
@@ -11,8 +10,6 @@ import scala.util.Try
   * 1st milestone: data extraction
   */
 object Extraction extends ExtractionInterface with SparkSessionWrapper {
-
-  import spark.implicits._
 
   case class Date(year: Year, month: Int, day: Int)
   case class Record(year: Year, location: Location, temperature: Temperature)
@@ -38,7 +35,7 @@ object Extraction extends ExtractionInterface with SparkSessionWrapper {
   }
 
   private def toLocationTemp(year: Year, stations: Map[String, Location], temp: TemperatureRecord): Option[(LocalDate, Location, Double)] = {
-    Try(LocalDate.of(year, temp.month, temp.day), stations(temp.id), celsiusFromFahrenheit(temp.temp)).toOption
+    Try((LocalDate.of(year, temp.month, temp.day), stations(temp.id), celsiusFromFahrenheit(temp.temp))).toOption
   }
 
   /**
@@ -49,12 +46,5 @@ object Extraction extends ExtractionInterface with SparkSessionWrapper {
     records
       .groupBy(r => (r._1.getYear, r._2))
       .map(x => (x._1._2, x._2.map(y => y._3).sum/x._2.count(_ => true)))
-  }
-
-  def sparkLocationYearlyAverageRecords(records: Dataset[Record]): Dataset[(Location, Temperature)] = {
-    records.groupBy($"year", $"location")
-      .mean("temperature")
-      .select($"location", $"avg(temperature)" as "temperature")
-      .as[(Location, Temperature)]
   }
 }

@@ -1,9 +1,10 @@
 package observatory
 
+import java.io.File
+import java.nio.file.{Files, Paths}
 import java.time._
 
 import observatory.util.TimeRecord
-import observatory.Visualization._
 
 
 object Main extends App with SparkSessionWrapper {
@@ -30,10 +31,24 @@ object Main extends App with SparkSessionWrapper {
     -60d -> Color(0,      0,    0)
   ).toSeq
 
-  val result3 = visualize(tempsAvg, colors)
-  timeRecord.stepFinished(Instant.now(), "Visualization")
 
-  result3.output("image")
+  def generateAndSaveTile(year: Year, tile: Tile, data: Iterable[(Location, Temperature)]): Unit = {
+    val zoom = tile.zoom
+    val x = tile.x
+    val y = tile.y
+    val zoomdir = f"$outdir%s/$year%d/$zoom%d"
+    val fn = f"$zoomdir%s/$x%d-$y%d.png"
+    Files.createDirectories(Paths.get(zoomdir))
+
+    val img = Interaction.tile(data, colors, tile)
+    img.output(new File(fn))
+  }
+
+  val data = List[(Year, Iterable[(Location, Temperature)])]((2015, tempsAvg))
+
+  Interaction.generateTiles[Iterable[(Location, Temperature)]](data, generateAndSaveTile)
+  timeRecord.stepFinished(Instant.now(), "Visualization")
   timeRecord.processFinished(Instant.now())
+
 
 }

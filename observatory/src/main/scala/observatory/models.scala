@@ -8,6 +8,10 @@ package observatory
 case class Location(lat: Double, lon: Double){
   if (lat < -90 | lat > 90) throw new Exception("latitude out of bounds: " + lat)
   else if (lat < -180 | lat > 180) throw new Exception("longitude out of bounds: " + lon)
+
+  def toGridLocation: GridLocation = {
+    GridLocation(this.lat.toInt, this.lon.toInt)
+  }
 }
 
 /**
@@ -26,7 +30,10 @@ case class Tile(x: Int, y: Int, zoom: Int)
   * @param lat Circle of latitude in degrees, -89 ≤ lat ≤ 90
   * @param lon Line of longitude in degrees, -180 ≤ lon ≤ 179
   */
-case class GridLocation(lat: Int, lon: Int)
+case class GridLocation(lat: Int, lon: Int){
+  if (lat < -89 | lat > 90) throw new Exception("latitude out of bounds: " + lat)
+  else if (lon < -180 | lon > 179) throw new Exception("longitude out of bounds: " + lon)
+}
 
 /**
   * Introduced in Week 5. Represents a point inside of a grid cell.
